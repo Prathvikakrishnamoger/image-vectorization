@@ -1,11 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Data Directory setup for Persistent File Storage
 const DATA_DIR = path.join(process.cwd(), 'data');
