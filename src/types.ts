@@ -69,6 +69,7 @@ export interface TransmissionResult {
   metrics: QualityMetrics;
   networkBenchmarks: NetworkBenchmarkItem[];
   colorPalette: string[];
+  extractedText?: string;
   aiNotes?: string;
 }
 

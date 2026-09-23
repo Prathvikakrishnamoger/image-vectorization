@@ -197,6 +197,18 @@ export const ReceiverPanel: React.FC<ReceiverPanelProps> = ({
               </div>
             )}
 
+            {/* Extracted Text (OCR) */}
+            {result.extractedText && (
+              <div className="bg-purple-950/40 border border-purple-800/80 rounded-xl p-4 text-sm text-purple-200">
+                <div className="font-bold text-purple-300 mb-2">
+                  Extracted Text
+                </div>
+                <div className="whitespace-pre-wrap bg-slate-950/60 rounded-lg p-3 font-mono text-slate-200">
+                  {result.extractedText}
+                </div>
+              </div>
+            )}
+
             {/* Tab 1: Interactive Split-Curtain Comparison */}
             {activeTab === 'compare' && originalImage && (
               <ComparisonSlider

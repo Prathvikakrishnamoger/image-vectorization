@@ -10,6 +10,7 @@ import { SAMPLE_PRESETS } from './lib/sampleImages';
 import { vectorizeImageData } from './lib/vectorizer';
 import { renderSvgToBitmapDataUrl, applyAiReconstructionPipeline } from './lib/reconstructor';
 import { calculateImageQualityMetrics, calculateNetworkBenchmarks } from './lib/metrics';
+import { extractTextFromImage } from './lib/ocr';
 
 export default function App() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -152,6 +153,9 @@ export default function App() {
     setLoading(true);
     setSentSuccess(false);
     try {
+      // 0. Start OCR in parallel with vectorization (non-blocking)
+      const ocrPromise = extractTextFromImage(originalImage).catch(() => '');
+
       // 1. Vectorize raster image into SVG XML
       const { svgContent, stats, colorPalette } = await vectorizeImageData(originalImage, config);
 
@@ -187,6 +191,10 @@ export default function App() {
         stats.svgSizeBytes
       );
 
+      // Wait for OCR result (ran in parallel with vectorization)
+      const extractedText = await ocrPromise;
+      console.log("Extracted text:", extractedText);
+
       const transmissionResult: TransmissionResult = {
         stats,
         transmittedVectorSvg: svgContent,
@@ -195,6 +203,7 @@ export default function App() {
         metrics,
         networkBenchmarks,
         colorPalette,
+        extractedText: extractedText || undefined,
         aiNotes,
       };
 
