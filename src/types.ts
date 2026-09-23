@@ -34,6 +34,7 @@ export interface TransmissionStats {
   originalSizeBytes: number;
   svgSizeBytes: number;
   gzipSizeBytes: number;
+  rawPixelSizeBytes: number; // Actual base64 raw pixel payload size
   bandwidthSavedPercent: number;
   compressionRatio: number;
   width: number;
@@ -70,6 +71,16 @@ export interface TransmissionResult {
   colorPalette: string[];
   aiNotes?: string;
 }
+
+/** Raw pixel transmission result for comparison with vector method */
+export interface RawPixelResult {
+  payloadSizeBytes: number;
+  processingTimeMs: number;
+  imageBase64: string;
+  networkBenchmarks: NetworkBenchmarkItem[];
+}
+
+export type TransmissionMode = 'vector' | 'raw_pixel';
 
 export interface PresetSample {
   id: string;

@@ -13,18 +13,21 @@ import {
   HardDrive,
   RefreshCw,
   Maximize2,
+  BarChart3,
 } from 'lucide-react';
-import { TransmissionResult, QualityMetrics, NetworkBenchmarkItem } from '../types';
+import { TransmissionResult, QualityMetrics, NetworkBenchmarkItem, RawPixelResult } from '../types';
 import { ComparisonSlider } from './ComparisonSlider';
 import { PayloadInspector } from './PayloadInspector';
 import { MetricsCard } from './MetricsCard';
 import { NetworkBenchmark } from './NetworkBenchmark';
+import { MethodComparisonPanel } from './MethodComparisonPanel';
 
 interface ReceiverPanelProps {
   result: TransmissionResult | null;
   originalImage: string | null;
   loading: boolean;
   onOpenEnlargedViewer?: () => void;
+  rawPixelResult: RawPixelResult | null;
 }
 
 export const ReceiverPanel: React.FC<ReceiverPanelProps> = ({
@@ -32,9 +35,10 @@ export const ReceiverPanel: React.FC<ReceiverPanelProps> = ({
   originalImage,
   loading,
   onOpenEnlargedViewer,
+  rawPixelResult,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'compare' | 'output' | 'vector' | 'code' | 'metrics' | 'network'
+    'compare' | 'output' | 'vector' | 'code' | 'metrics' | 'network' | 'pixelvsvec'
   >('compare');
 
   const handleDownloadReconstructed = () => {
@@ -120,6 +124,18 @@ export const ReceiverPanel: React.FC<ReceiverPanelProps> = ({
               >
                 <Wifi className="w-3.5 h-3.5 inline mr-1" /> Latency
               </button>
+              {rawPixelResult && (
+                <button
+                  onClick={() => setActiveTab('pixelvsvec')}
+                  className={`px-3 py-1.5 rounded-lg transition-all font-medium ${
+                    activeTab === 'pixelvsvec'
+                      ? 'bg-gradient-to-r from-orange-600 to-rose-600 text-white shadow'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 inline mr-1" /> Pixel vs Vector
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -262,6 +278,15 @@ export const ReceiverPanel: React.FC<ReceiverPanelProps> = ({
             {/* Tab 6: Network Latency */}
             {activeTab === 'network' && (
               <NetworkBenchmark benchmarks={result.networkBenchmarks} />
+            )}
+
+            {/* Tab 7: Pixel vs Vector Comparison */}
+            {activeTab === 'pixelvsvec' && rawPixelResult && (
+              <MethodComparisonPanel
+                vectorStats={result.stats}
+                rawPixelResult={rawPixelResult}
+                vectorNetworkBenchmarks={result.networkBenchmarks}
+              />
             )}
           </div>
         )}

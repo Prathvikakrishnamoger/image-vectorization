@@ -5,7 +5,7 @@ import { ReceiverPanel } from './components/ReceiverPanel';
 import { UserAuthModal } from './components/UserAuthModal';
 import { TransmissionsInbox } from './components/TransmissionsInbox';
 import { EnlargedViewerModal } from './components/EnlargedViewerModal';
-import { VectorizerConfig, TransmissionResult, PresetSample, User, SavedTransmission } from './types';
+import { VectorizerConfig, TransmissionResult, PresetSample, User, SavedTransmission, RawPixelResult, TransmissionMode } from './types';
 import { SAMPLE_PRESETS } from './lib/sampleImages';
 import { vectorizeImageData } from './lib/vectorizer';
 import { renderSvgToBitmapDataUrl, applyAiReconstructionPipeline } from './lib/reconstructor';
@@ -32,6 +32,10 @@ export default function App() {
   // Enlarged Viewer Modal State
   const [viewerModalOpen, setViewerModalOpen] = useState<boolean>(false);
   const [activeModalTx, setActiveModalTx] = useState<SavedTransmission | null>(null);
+
+  // Transmission Mode & Raw Pixel Comparison State
+  const [transmissionMode, setTransmissionMode] = useState<TransmissionMode>('vector');
+  const [rawPixelResult, setRawPixelResult] = useState<RawPixelResult | null>(null);
 
   const [config, setConfig] = useState<VectorizerConfig>({
     colorPrecision: 6,
@@ -196,7 +200,23 @@ export default function App() {
 
       setResult(transmissionResult);
 
-      // 7. Save transmission payload to Database for Recipient
+      // 7. Compute Raw Pixel result for comparison
+      const rawPixelStartTime = performance.now();
+      const rawPayloadSizeBytes = stats.rawPixelSizeBytes || new Blob([originalImage]).size;
+      const rawPixelEndTime = performance.now();
+      const rawPixelNetworkBenchmarks = calculateNetworkBenchmarks(
+        rawPayloadSizeBytes,
+        rawPayloadSizeBytes // For raw pixel, both raster and "transmitted" are the same full payload
+      );
+
+      setRawPixelResult({
+        payloadSizeBytes: rawPayloadSizeBytes,
+        processingTimeMs: Math.round(rawPixelEndTime - rawPixelStartTime),
+        imageBase64: originalImage,
+        networkBenchmarks: rawPixelNetworkBenchmarks,
+      });
+
+      // 8. Save transmission payload to Database for Recipient
       const recipientObj = users.find((u) => u.id === recipientId);
       const presetObj = SAMPLE_PRESETS.find((p) => p.id === selectedPresetId);
       const title = presetObj ? presetObj.name : 'Custom Image Transmission';
@@ -237,6 +257,7 @@ export default function App() {
     setVectorPreviewSvg(tx.result.transmittedVectorSvg);
     setResult(tx.result);
     setConfig(tx.config);
+    setRawPixelResult(null); // Clear raw pixel data from previous comparison
   };
 
   const handleDeleteTransmission = async (id: string) => {
@@ -303,6 +324,8 @@ export default function App() {
               recipientId={recipientId}
               onSelectRecipient={setRecipientId}
               sentSuccess={sentSuccess}
+              transmissionMode={transmissionMode}
+              onChangeTransmissionMode={setTransmissionMode}
             />
           </div>
 
@@ -312,6 +335,7 @@ export default function App() {
               result={result}
               originalImage={originalImage}
               loading={loading}
+              rawPixelResult={rawPixelResult}
               onOpenEnlargedViewer={() => {
                 setActiveModalTx(
                   transmissions.find((t) => t.id === selectedTxId) || null

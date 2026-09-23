@@ -93,6 +93,11 @@ export async function vectorizeImageData(
   // Gzip compression estimate for SVG text (~0.35 of plain XML)
   const gzipSizeBytes = Math.round(svgSizeBytes * 0.38);
 
+  // Calculate actual raw pixel (uncompressed RGBA) payload size for comparison
+  // Raw pixels = width * height * 4 bytes (R, G, B, A channels)
+  // This represents the true "raw pixel" data without any compression
+  const rawPixelSizeBytes = width * height * 4;
+
   const savedPercent = Math.max(0, Math.round((1 - (svgSizeBytes / estimatedOriginalSizeBytes)) * 1000) / 10);
   const ratio = Math.round((estimatedOriginalSizeBytes / Math.max(1, svgSizeBytes)) * 10) / 10;
   const endTime = performance.now();
@@ -101,6 +106,7 @@ export async function vectorizeImageData(
     originalSizeBytes: estimatedOriginalSizeBytes,
     svgSizeBytes,
     gzipSizeBytes,
+    rawPixelSizeBytes,
     bandwidthSavedPercent: savedPercent,
     compressionRatio: ratio,
     width,

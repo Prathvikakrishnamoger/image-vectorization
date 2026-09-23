@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { Upload, Cpu, ArrowRight, Sliders, Image as ImageIcon, Zap, FileCode, CheckCircle2, UserCheck, Send, Sparkles } from 'lucide-react';
-import { VectorizerConfig, PresetSample, User } from '../types';
+import { Upload, Cpu, ArrowRight, Sliders, Image as ImageIcon, Zap, FileCode, CheckCircle2, UserCheck, Send, Sparkles, Grid3X3 } from 'lucide-react';
+import { VectorizerConfig, PresetSample, User, TransmissionMode } from '../types';
 
 interface SenderPanelProps {
   originalImage: string | null;
@@ -17,6 +17,8 @@ interface SenderPanelProps {
   recipientId: string;
   onSelectRecipient: (id: string) => void;
   sentSuccess: boolean;
+  transmissionMode: TransmissionMode;
+  onChangeTransmissionMode: (mode: TransmissionMode) => void;
 }
 
 export const SenderPanel: React.FC<SenderPanelProps> = ({
@@ -34,6 +36,8 @@ export const SenderPanel: React.FC<SenderPanelProps> = ({
   recipientId,
   onSelectRecipient,
   sentSuccess,
+  transmissionMode,
+  onChangeTransmissionMode,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,13 +214,54 @@ export const SenderPanel: React.FC<SenderPanelProps> = ({
           </select>
         </div>
 
+        {/* Transmission Mode Toggle */}
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 mb-4 space-y-2">
+          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-cyan-400" />
+            Transmission Method
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onChangeTransmissionMode('vector')}
+              className={`p-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                transmissionMode === 'vector'
+                  ? 'bg-cyan-950 border-cyan-600 text-cyan-300 shadow-lg shadow-cyan-950/60'
+                  : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-slate-600'
+              }`}
+            >
+              <FileCode className="w-4 h-4" />
+              <div className="text-left">
+                <div className={transmissionMode === 'vector' ? 'text-cyan-300' : 'text-slate-300'}>Vector SVG</div>
+                <div className="text-[10px] text-slate-400 font-normal">Vectorize & compress</div>
+              </div>
+            </button>
+            <button
+              onClick={() => onChangeTransmissionMode('raw_pixel')}
+              className={`p-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                transmissionMode === 'raw_pixel'
+                  ? 'bg-orange-950 border-orange-600 text-orange-300 shadow-lg shadow-orange-950/60'
+                  : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-slate-600'
+              }`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+              <div className="text-left">
+                <div className={transmissionMode === 'raw_pixel' ? 'text-orange-300' : 'text-slate-300'}>Raw Pixels</div>
+                <div className="text-[10px] text-slate-400 font-normal">Send as Base64 PNG</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Vectorization Parameters Controls */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 space-y-3 mb-4">
+        <div className={`bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 space-y-3 mb-4 transition-opacity ${transmissionMode === 'raw_pixel' ? 'opacity-40 pointer-events-none' : ''}`}>
           <div className="flex items-center justify-between text-xs font-semibold text-cyan-300 border-b border-slate-800/80 pb-2">
             <span className="flex items-center gap-1.5">
               <Sliders className="w-3.5 h-3.5" />
               Vectorization Engine Configuration
             </span>
+            {transmissionMode === 'raw_pixel' && (
+              <span className="text-[10px] text-orange-400 font-mono">N/A IN RAW MODE</span>
+            )}
           </div>
 
           {/* Color Precision Slider */}
@@ -283,17 +328,29 @@ export const SenderPanel: React.FC<SenderPanelProps> = ({
       <button
         onClick={onTransmit}
         disabled={!originalImage || loading}
-        className="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-950/60 cursor-pointer disabled:cursor-not-allowed mt-2"
+        className={`w-full py-3 px-4 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer disabled:cursor-not-allowed mt-2 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 ${
+          transmissionMode === 'raw_pixel'
+            ? 'bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-500 hover:to-rose-500 shadow-orange-950/60'
+            : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-cyan-950/60'
+        }`}
       >
         {loading ? (
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            <span>Vectorizing & Transmitting Payload...</span>
+            <span>
+              {transmissionMode === 'raw_pixel'
+                ? 'Sending Raw Pixel Payload...'
+                : 'Vectorizing & Transmitting Payload...'}
+            </span>
           </div>
         ) : (
           <>
             <Send className="w-4 h-4" />
-            <span>Vectorize & Transmit to Recipient</span>
+            <span>
+              {transmissionMode === 'raw_pixel'
+                ? 'Send Raw Pixels to Recipient'
+                : 'Vectorize & Transmit to Recipient'}
+            </span>
           </>
         )}
       </button>
@@ -301,7 +358,9 @@ export const SenderPanel: React.FC<SenderPanelProps> = ({
       {sentSuccess && (
         <div className="mt-2 text-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 p-2 rounded-lg flex items-center justify-center gap-1.5">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          Vector payload saved & transmitted to recipient!
+          {transmissionMode === 'raw_pixel'
+            ? 'Raw pixel payload saved & transmitted to recipient!'
+            : 'Vector payload saved & transmitted to recipient!'}
         </div>
       )}
     </section>
